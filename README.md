@@ -4,9 +4,15 @@ Resto is an utility for sending out HTTP requests according to a YAML definition
 
 ## Installation
 
-Just plain old
+Currently only installation from source is supported.
 
-    $ gem install resto
+```shell
+$ git clone https://github.com/adamruzicka/resto
+$ cd resto
+$ rm *.gem
+$ gem build resto.gemspec
+$ gem install ./resto-*.gem
+```
 
 ## Usage
 
