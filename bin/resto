@@ -51,7 +51,7 @@ end
 
 resource = RestClient::Resource.new(top['host'], :headers => top.fetch('headers', {}))[top['path']]
 
-response = case top['method'].upcase
+response = case top.fetch('method', 'GET').upcase
            when 'POST'
              resource.post JSON.dump(top['payload'])
            when 'GET'
