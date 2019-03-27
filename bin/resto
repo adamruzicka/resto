@@ -1,0 +1,60 @@
+#!/bin/env ruby
+
+require 'json'
+require 'yaml'
+require 'rest-client'
+require 'optparse'
+require 'erb'
+
+options = { :env => {} }
+OptionParser.new do |opts|
+  opts.on('-fFILE', '--file=FILE', 'The FILE containing definitions') do |f|
+    options[:file] = f
+  end
+
+  opts.on('-AATTRIBUTE', '--attribute=ATTRIBUTE', 'Use ATTRIBUTE as top level key') do |a|
+    options[:attribute] = a
+  end
+
+  opts.on('-J', '--json', 'Print output as JSON') do
+    options[:json] = true
+  end
+
+  opts.on('-eENVIRONMENT', '--environment=ENVIRONMENT', 'Add environment to template') do |kv|
+    key, value = kv.split('=', 2)
+    key, value = kv.split(' ', 2) if value.nil?
+    options[:env].update(key => value)
+  end
+
+  opts.on('-s', '--show', 'Show the request definition') do
+    options[:show] = true
+  end
+end.parse!
+
+template = ERB.new(File.read(options[:file]))
+
+data = YAML::load(template.result_with_hash(options.slice(:env)))
+
+top = options[:attribute] ? data[options[:attribute]] : data
+
+if options[:show]
+  top['url'] = top.delete('host') + top.delete('path')
+  puts YAML.dump top
+  exit 0
+end
+
+resource = RestClient::Resource.new(top['host'], :headers => top.fetch('headers', {}))[top['path']]
+
+response = case top['method'].upcase
+           when 'POST'
+             resource.post JSON.dump(top['payload'])
+           when 'GET'
+             resource.get :params => top.fetch('parameters', {}).reject { |k, v| v.nil? }
+           end
+
+response = JSON.parse(response.body)
+if options[:json]
+  puts JSON.pretty_generate response
+else
+  puts YAML.dump(response)
+end
