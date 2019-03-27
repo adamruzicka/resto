@@ -7,7 +7,7 @@ require 'optparse'
 require 'erb'
 
 options = { :env => {} }
-OptionParser.new do |opts|
+parser = OptionParser.new do |opts|
   opts.on('-fFILE', '--file=FILE', 'The FILE containing definitions') do |f|
     options[:file] = f
   end
@@ -29,7 +29,13 @@ OptionParser.new do |opts|
   opts.on('-s', '--show', 'Show the request definition') do
     options[:show] = true
   end
-end.parse!
+end
+parser.parse!
+
+if options[:file].nil?
+  puts parser.help
+  exit 0
+end
 
 template = ERB.new(File.read(options[:file]))
 
